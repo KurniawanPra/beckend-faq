@@ -1,5 +1,5 @@
-# Use PHP 8.3 with Apache for a simple Render deployment
-FROM php:8.3-apache
+# Ganti ke PHP 8.4 sesuai kebutuhan Laravel 13.6
+FROM php:8.4-apache
 
 # Set environment variables
 ENV COMPOSER_ALLOW_SUPERUSER=1
@@ -34,13 +34,13 @@ WORKDIR /var/www/html
 # Install Composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
-# Copy only composer files first to leverage Docker cache
+# Copy only composer files first
 COPY composer.json composer.lock ./
 
-# Install dependencies without scripts first to avoid errors during build
+# Install dependencies (Sekarang akan berhasil karena PHP sudah 8.4)
 RUN composer install --no-interaction --no-dev --no-scripts --no-autoloader
 
-# Copy the rest of the application
+# Copy sisanya
 COPY . .
 
 # Create necessary directories and set permissions
@@ -52,10 +52,10 @@ RUN mkdir -p \
     chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache && \
     chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Generate autoloader and run scripts
+# Generate autoloader
 RUN composer dump-autoload --optimize --no-dev
 
-# Change Apache document root to public/
+# Change Apache document root
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
@@ -63,5 +63,5 @@ RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.
 # Expose port
 EXPOSE 80
 
-# Entrypoint script using shell form to support &&
+# Entrypoint script
 CMD php artisan migrate --force && apache2-foreground
