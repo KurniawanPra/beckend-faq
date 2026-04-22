@@ -1,4 +1,4 @@
-# Ganti ke PHP 8.4 sesuai kebutuhan Laravel 13.6
+# Ganti ke PHP 8.4
 FROM php:8.4-apache
 
 # Set environment variables
@@ -17,13 +17,14 @@ RUN apt-get update && apt-get install -y \
     libzip-dev \
     libicu-dev \
     libsodium-dev \
-    libsqlite3-dev
+    libsqlite3-dev \
+    libpq-dev  # <--- WAJIB UNTUK POSTGRESQL
 
 # Clear cache
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Install PHP extensions
-RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip intl sodium
+# Install PHP extensions (Menambahkan pdo_pgsql dan pgsql)
+RUN docker-php-ext-install pdo_mysql pdo_pgsql pgsql mbstring exif pcntl bcmath gd zip intl sodium
 
 # Enable Apache mod_rewrite
 RUN a2enmod rewrite
@@ -37,7 +38,7 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 # Copy only composer files first
 COPY composer.json composer.lock ./
 
-# Install dependencies (Sekarang akan berhasil karena PHP sudah 8.4)
+# Install dependencies
 RUN composer install --no-interaction --no-dev --no-scripts --no-autoloader
 
 # Copy sisanya
