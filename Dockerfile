@@ -73,10 +73,10 @@ RUN composer dump-autoload --optimize --no-dev --no-scripts --ignore-platform-re
 
 # Setup environment for build steps
 RUN cp .env.example .env && \
-    php artisan key:generate
+    php artisan key:generate --ansi > /tmp/error.log 2>&1 || (cat /tmp/error.log && exit 1)
 
 # Run package discovery natively now that .env is present
-RUN php artisan package:discover --ansi
+RUN php artisan package:discover --ansi > /tmp/discover.log 2>&1 || (cat /tmp/discover.log && exit 1)
 
 # Change Apache document root
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public
