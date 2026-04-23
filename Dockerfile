@@ -68,8 +68,11 @@ RUN mkdir -p \
 # Install Composer binary for dump-autoload
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
-# Generate autoloader and run discovery with a dummy APP_KEY to prevent crashes
-RUN APP_KEY=base64:zkX+sn9v0pX3pY3qZ4r5s6t7u8v9w0x1y2z3a4b5c6d= composer dump-autoload --optimize --no-dev --ignore-platform-reqs
+# Generate autoloader without running scripts automatically
+RUN composer dump-autoload --optimize --no-dev --no-scripts
+
+# Run package discovery manually with a dummy APP_KEY to catch specific errors
+RUN APP_KEY=base64:zkX+sn9v0pX3pY3qZ4r5s6t7u8v9w0x1y2z3a4b5c6d= php artisan package:discover --ansi
 
 # Change Apache document root
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public
