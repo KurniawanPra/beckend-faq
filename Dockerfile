@@ -1,8 +1,26 @@
+# STAGE 1: Build Stage (Install Dependencies)
+FROM composer:2.7 as build
+
+WORKDIR /app
+
+# Copy only composer files for caching
+COPY composer.json composer.lock ./
+
+# Install dependencies in a light environment
+RUN composer install \
+    --no-dev \
+    --optimize-autoloader \
+    --no-interaction \
+    --no-progress \
+    --no-scripts \
+    --prefer-dist \
+    --ignore-platform-reqs
+
+# STAGE 2: Production Stage (Apache)
 FROM php:8.2-apache
 
 # Set environment variables
 ENV COMPOSER_ALLOW_SUPERUSER=1
-ENV COMPOSER_MEMORY_LIMIT=-1
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -16,7 +34,6 @@ RUN apt-get update && apt-get install -y \
     libzip-dev \
     libicu-dev \
     libsodium-dev \
-    libsqlite3-dev \
     libpq-dev \
     libssl-dev
 
@@ -32,17 +49,11 @@ RUN a2enmod rewrite
 # Set working directory
 WORKDIR /var/www/html
 
-# Install Composer
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
-
-# Copy only composer files first
-COPY composer.json composer.lock ./
-
-# Install dependencies with extra verbosity and ignore platform reqs to debug/fix exit code 4
-RUN composer install --no-interaction --no-dev --no-scripts --no-autoloader --ignore-platform-reqs -vvv
-
-# Copy sisanya
+# Copy application code
 COPY . .
+
+# Copy vendor from build stage
+COPY --from=build /app/vendor /var/www/html/vendor
 
 # Create necessary directories and set permissions
 RUN mkdir -p \
@@ -52,6 +63,9 @@ RUN mkdir -p \
     bootstrap/cache && \
     chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache && \
     chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+
+# Install Composer binary for dump-autoload
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
 # Generate autoloader
 RUN composer dump-autoload --optimize --no-dev --ignore-platform-reqs
@@ -64,5 +78,5 @@ RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.
 # Expose port
 EXPOSE 80
 
-# Entrypoint script using shell form to support &&
+# Entrypoint script
 CMD php artisan migrate --force --seed && apache2-foreground
