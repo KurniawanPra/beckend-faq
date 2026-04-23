@@ -92,7 +92,16 @@ docker run -d \
 ```
 
 ### 3. Otomatisasi
-Container ini sudah dikonfigurasi untuk menjalankan `php artisan migrate --force --seed` secara otomatis saat pertama kali dijalankan. API akan tersedia di `http://localhost:8080/api/`.
+Container ini sudah dikonfigurasi untuk menjalankan `php artisan migrate --force --seed` secara otomatis saat pertama kali dijalankan menggunakan **Multi-Stage Build** (lebih ringan dan stabil). API akan tersedia di `http://localhost:8080/api/`.
+
+---
+
+## Troubleshooting (Windows)
+
+Jika Anda mengalami error `Exit Code 4` saat `composer install` atau build Docker:
+1. **File Locking**: Matikan sementara Antivirus atau Windows Search Indexer yang mungkin mengunci folder `vendor`.
+2. **Lock File**: Jika `composer.lock` bermasalah, jalankan `composer update --ignore-platform-reqs` untuk menyelaraskan versi.
+3. **Docker Memory**: Pastikan alokasi RAM untuk Docker minimal 4GB.
 
 ---
 

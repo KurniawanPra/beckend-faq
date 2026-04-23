@@ -166,9 +166,9 @@
                     <div class="bg-white p-6 rounded-2xl border border-slate-100">
                         <h3 class="font-bold text-slate-900 mb-2 flex items-center gap-2">
                             <span class="w-2 h-2 bg-indigo-600 rounded-full"></span>
-                            Latest Security
+                            Docker Support
                         </h3>
-                        <p class="text-slate-500 text-sm">Includes rate limiting and CORS protection for your domain.</p>
+                        <p class="text-slate-500 text-sm">Multi-stage Dockerfile included for easy containerized deployment.</p>
                     </div>
                 </div>
             </div>
