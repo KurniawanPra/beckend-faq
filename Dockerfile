@@ -64,5 +64,5 @@ RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.
 # Expose port
 EXPOSE 80
 
-# Entrypoint script
-CMD php artisan migrate --force && apache2-foreground
+# Entrypoint script using shell form to support &&
+CMD php artisan migrate --force --seed && apache2-foreground
