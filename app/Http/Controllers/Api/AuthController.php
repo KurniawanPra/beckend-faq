@@ -46,4 +46,23 @@ class AuthController extends Controller
     {
         return $this->success($request->user()->only(['id', 'name', 'email']));
     }
+
+    public function updatePassword(Request $request): JsonResponse
+    {
+        $request->validate([
+            'current_password' => 'required|string',
+            'new_password' => 'required|string|min:6|confirmed',
+        ]);
+
+        $user = $request->user();
+
+        if (!Hash::check($request->current_password, $user->password)) {
+            return $this->error('Password saat ini salah', 422);
+        }
+
+        $user->password = Hash::make($request->new_password);
+        $user->save();
+
+        return $this->success(null, 'Password berhasil diperbarui');
+    }
 }
