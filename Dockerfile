@@ -5,7 +5,7 @@ WORKDIR /app
 
 # Copy only composer files for caching
 COPY composer.json composer.lock ./
-RUN APP_KEY=base64:xxx php artisan package:discover --ansi
+
 # Install dependencies in a light environment
 RUN composer install \
     --no-dev \
@@ -71,8 +71,12 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 # Generate autoloader without running scripts automatically
 RUN composer dump-autoload --optimize --no-dev --no-scripts --ignore-platform-reqs
 
-# Run package discovery manually and print the exact error if it fails
-RUN APP_KEY=base64:zkX+sn9v0pX3pY3qZ4r5s6t7u8v9w0x1y2z3a4b5c6d= php artisan package:discover --ansi > /tmp/discover.log 2>&1 || (cat /tmp/discover.log && exit 1)
+# Setup environment for build steps
+RUN cp .env.example .env && \
+    php artisan key:generate
+
+# Run package discovery natively now that .env is present
+RUN php artisan package:discover --ansi
 
 # Change Apache document root
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public
