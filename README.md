@@ -71,6 +71,31 @@ API tersedia di `http://localhost:8000/api/`
 
 ---
 
+## Instalasi via Docker (Opsional)
+
+Jika Anda ingin menjalankan backend menggunakan Docker, gunakan langkah berikut:
+
+### 1. Build Image
+```bash
+docker build -t faq-backend .
+```
+
+### 2. Jalankan Container
+Pastikan Anda sudah menyiapkan database MySQL (bisa di host atau container lain) dan mengaturnya di file `.env`.
+
+```bash
+docker run -d \
+  --name faq-api \
+  -p 8080:80 \
+  --env-file .env \
+  faq-backend
+```
+
+### 3. Otomatisasi
+Container ini sudah dikonfigurasi untuk menjalankan `php artisan migrate --force --seed` secara otomatis saat pertama kali dijalankan. API akan tersedia di `http://localhost:8080/api/`.
+
+---
+
 ## Daftar Endpoint
 
 | Method | URL | Auth | Keterangan |
