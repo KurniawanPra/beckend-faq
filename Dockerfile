@@ -61,14 +61,15 @@ RUN mkdir -p \
     storage/framework/sessions \
     storage/framework/views \
     bootstrap/cache && \
+    rm -f bootstrap/cache/*.php && \
     chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache && \
     chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
 # Install Composer binary for dump-autoload
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
-# Generate autoloader
-RUN composer dump-autoload --optimize --no-dev --ignore-platform-reqs
+# Generate autoloader and run discovery with a dummy APP_KEY to prevent crashes
+RUN APP_KEY=base64:zkX+sn9v0pX3pY3qZ4r5s6t7u8v9w0x1y2z3a4b5c6d= composer dump-autoload --optimize --no-dev --ignore-platform-reqs
 
 # Change Apache document root
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public
