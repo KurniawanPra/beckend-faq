@@ -5,7 +5,7 @@ WORKDIR /app
 
 # Copy only composer files for caching
 COPY composer.json composer.lock ./
-
+RUN APP_KEY=base64:xxx php artisan package:discover --ansi
 # Install dependencies in a light environment
 RUN composer install \
     --no-dev \
