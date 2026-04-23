@@ -1,6 +1,6 @@
-# FAQ Portal PT INL — Backend (Laravel)
+# FAQ PT INL — Backend (Laravel)
 
-Backend API untuk aplikasi **FAQ Portal PT INL**. Dibangun dengan **Laravel 13** + **Sanctum** untuk autentikasi berbasis token.
+Backend API untuk aplikasi **FAQ Portal PT INL**. Dibangun dengan **Laravel 9** + **Sanctum** untuk autentikasi berbasis token.
 
 ---
 
@@ -56,7 +56,7 @@ php artisan db:seed
 ```
 
 Seeder akan membuat:
-- 1 akun admin (`admin@inl.co.id` / `password123`)
+- 1 akun admin (`admin@admin.com` / `admin123`)
 - 6 topik FAQ (Akun, Password, Pembayaran, Layanan, Kebijakan, Teknis)
 - 12 contoh pertanyaan & jawaban HRD PT INL
 - 3 contoh inquiry dari pengguna
@@ -109,7 +109,7 @@ Accept: application/json
 ```bash
 curl -X POST http://localhost:8000/api/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"admin@inl.co.id","password":"password123"}'
+  -d '{"email":"admin@admin.com","password":"admin123"}'
 ```
 
 ---
@@ -141,7 +141,7 @@ Untuk production, ubah `allowed_origins` sesuai domain frontend Anda.
 
 | Field | Value |
 |:------|:------|
-| Email | `admin@inl.co.id` |
-| Password | `password123` |
+| Email | `admin@admin.com` |
+| Password | `admin123` |
 
 > ⚠️ **Ganti password** setelah pertama kali login di production!

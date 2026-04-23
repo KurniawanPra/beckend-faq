@@ -1,55 +1,54 @@
 <?php
 
-use Illuminate\Auth\AuthenticationException;
-use Illuminate\Foundation\Application;
-use Illuminate\Foundation\Configuration\Exceptions;
-use Illuminate\Foundation\Configuration\Middleware;
-use Illuminate\Http\Request;
-use Illuminate\Validation\ValidationException;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+/*
+|--------------------------------------------------------------------------
+| Create The Application
+|--------------------------------------------------------------------------
+|
+| The first thing we will do is create a new Laravel application instance
+| which serves as the "glue" for all the components of Laravel, and is
+| the IoC container for the system binding all of the various parts.
+|
+*/
 
-return Application::configure(basePath: dirname(__DIR__))
-    ->withRouting(
-        web: __DIR__.'/../routes/web.php',
-        api: __DIR__.'/../routes/api.php',
-        commands: __DIR__.'/../routes/console.php',
-        health: '/up',
-    )
-    ->withMiddleware(function (Middleware $middleware): void {
-        // Pastikan semua request ke /api/* mendapat Accept: application/json
-        // agar Sanctum tidak mencoba redirect ke route 'login' yang tidak ada
-        $middleware->prepend(\App\Http\Middleware\ForceJsonOnApiRequests::class);
-    })
-    ->withExceptions(function (Exceptions $exceptions): void {
+$app = new Illuminate\Foundation\Application(
+    $_ENV['APP_BASE_PATH'] ?? dirname(__DIR__)
+);
 
-        // ─── 401 Unauthenticated ───────────────────────────────────────────────
-        // Override unauthenticated handler sehingga API selalu dapat JSON (bukan redirect)
-        $exceptions->render(function (AuthenticationException $e, Request $request) {
-            return response()->json([
-                'success' => false,
-                'error'   => 'Unauthenticated. Token tidak ada atau sudah expired.',
-            ], 401);
-        });
+/*
+|--------------------------------------------------------------------------
+| Bind Important Interfaces
+|--------------------------------------------------------------------------
+|
+| Next, we need to bind some important interfaces into the container so
+| we will be able to resolve them when needed. The kernels serve the
+| incoming requests to this application from both the web and CLI.
+|
+*/
 
-        // ─── 422 Validation ───────────────────────────────────────────────────
-        $exceptions->render(function (ValidationException $e, Request $request) {
-            if ($request->is('api/*') || $request->expectsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'error'   => 'Validasi gagal',
-                    'errors'  => $e->errors(),
-                ], 422);
-            }
-        });
+$app->singleton(
+    Illuminate\Contracts\Http\Kernel::class,
+    App\Http\Kernel::class
+);
 
-        // ─── 404 Not Found ────────────────────────────────────────────────────
-        $exceptions->render(function (NotFoundHttpException $e, Request $request) {
-            if ($request->is('api/*') || $request->expectsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'error'   => 'Resource tidak ditemukan',
-                ], 404);
-            }
-        });
+$app->singleton(
+    Illuminate\Contracts\Console\Kernel::class,
+    App\Console\Kernel::class
+);
 
-    })->create();
+$app->singleton(
+    Illuminate\Contracts\Debug\ExceptionHandler::class,
+    App\Exceptions\Handler::class
+);
+
+/*
+|--------------------------------------------------------------------------
+| Return The Application
+|--------------------------------------------------------------------------
+|
+| This script returns the application instance. The instance is given to
+| the calling script so we can actually get the things running.
+|
+*/
+
+return $app;

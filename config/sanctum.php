@@ -60,6 +60,8 @@ return [
     |
     | See: https://docs.github.com/en/code-security/secret-scanning/about-secret-scanning
     |
+    | See: https://docs.github.com/en/code-security/secret-scanning/about-secret-scanning
+    |
     */
 
     'token_prefix' => env('SANCTUM_TOKEN_PREFIX', ''),
@@ -78,7 +80,7 @@ return [
     'middleware' => [
         'authenticate_session' => Laravel\Sanctum\Http\Middleware\AuthenticateSession::class,
         'encrypt_cookies' => Illuminate\Cookie\Middleware\EncryptCookies::class,
-        'validate_csrf_token' => Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class,
+        'validate_csrf_token' => App\Http\Middleware\VerifyCsrfToken::class,
     ],
 
 ];
