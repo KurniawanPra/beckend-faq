@@ -80,4 +80,4 @@ RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.
 EXPOSE 80
 
 # Entrypoint script
-CMD cp .env.example .env && php artisan key:generate && php artisan package:discover --ansi && (php artisan migrate --force --seed || true) && apache2-foreground
+CMD cp .env.example .env && php artisan key:generate && php artisan package:discover --ansi && (php artisan migrate --force --seed || true) && chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache && apache2-foreground
