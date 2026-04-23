@@ -18,7 +18,7 @@ Backend API untuk aplikasi **FAQ Portal PT INL**. Dibangun dengan **Laravel 13**
 ### 1. Clone & Install Dependensi
 
 ```bash
-cd "beck end"
+cd beckend-render
 composer install
 ```
 
