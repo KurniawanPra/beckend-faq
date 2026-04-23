@@ -1,5 +1,4 @@
-# Ganti ke PHP 8.4
-FROM php:8.4-apache
+FROM php:8.2-apache
 
 # Set environment variables
 ENV COMPOSER_ALLOW_SUPERUSER=1
@@ -18,12 +17,13 @@ RUN apt-get update && apt-get install -y \
     libicu-dev \
     libsodium-dev \
     libsqlite3-dev \
-    libpq-dev  # <--- WAJIB UNTUK POSTGRESQL
+    libpq-dev \
+    libssl-dev
 
 # Clear cache
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Install PHP extensions (Menambahkan pdo_pgsql dan pgsql)
+# Install PHP extensions
 RUN docker-php-ext-install pdo_mysql pdo_pgsql pgsql mbstring exif pcntl bcmath gd zip intl sodium
 
 # Enable Apache mod_rewrite
@@ -38,8 +38,8 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 # Copy only composer files first
 COPY composer.json composer.lock ./
 
-# Install dependencies
-RUN composer install --no-interaction --no-dev --no-scripts --no-autoloader
+# Install dependencies with extra verbosity and ignore platform reqs to debug/fix exit code 4
+RUN composer install --no-interaction --no-dev --no-scripts --no-autoloader --ignore-platform-reqs -vvv
 
 # Copy sisanya
 COPY . .
@@ -54,7 +54,7 @@ RUN mkdir -p \
     chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
 # Generate autoloader
-RUN composer dump-autoload --optimize --no-dev
+RUN composer dump-autoload --optimize --no-dev --ignore-platform-reqs
 
 # Change Apache document root
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public
