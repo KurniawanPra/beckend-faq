@@ -27,9 +27,9 @@ class DashboardController extends Controller
                 $iQuery->whereYear('created_at', $parts[0])->whereMonth('created_at', $parts[1]);
             }
         } else {
-            $pQuery->where('created_at', '>=', now()->subDays(30));
-            $tQuery->where('created_at', '>=', now()->subDays(30));
-            $iQuery->where('created_at', '>=', now()->subDays(30));
+            $pQuery->where('created_at', '>=', now()->subDays(7));
+            $tQuery->where('created_at', '>=', now()->subDays(7));
+            $iQuery->where('created_at', '>=', now()->subDays(7));
         }
 
         $totalPertanyaan = $pQuery->count();
@@ -44,7 +44,7 @@ class DashboardController extends Controller
                         $q->whereYear('created_at', $parts[0])->whereMonth('created_at', $parts[1]);
                     }
                 } else {
-                    $q->where('created_at', '>=', now()->subDays(30));
+                    $q->where('created_at', '>=', now()->subDays(7));
                 }
             }])
             ->get()
@@ -53,34 +53,35 @@ class DashboardController extends Controller
                 'count' => $t->pertanyaan_count,
             ]);
 
-        $inquiryPerMinggu = (clone $iQuery)
-            ->selectRaw('YEARWEEK(created_at, 1) as minggu_key, COUNT(*) as count')
-            ->groupBy('minggu_key')
-            ->orderBy('minggu_key')
+        $inquiryData = (clone $iQuery)
+            ->selectRaw('DATE(created_at) as date, COUNT(*) as count')
+            ->groupBy('date')
             ->get()
-            ->map(function ($row) {
-                $year = substr($row->minggu_key, 0, 4);
-                $week = substr($row->minggu_key, 4);
-                
-                $dto = new \DateTime();
-                $dto->setISODate($year, $week);
-                $start = $dto->format('d M');
-                $dto->modify('+6 days');
-                $end = $dto->format('d M');
-                
-                return [
-                    'minggu' => "$start - $end",
-                    'count'  => (int) $row->count,
-                ];
-            });
+            ->keyBy('date');
+
+        $startDate = $month ? \Illuminate\Support\Carbon::parse($month . '-01') : now()->subDays(6);
+        $endDate   = $month ? (clone $startDate)->endOfMonth() : now();
+        
+        $inquiryPerHari = [];
+        $current = (clone $startDate)->startOfDay();
+        $target  = (clone $endDate)->startOfDay();
+
+        while ($current <= $target) {
+            $dateStr = $current->format('Y-m-d');
+            $inquiryPerHari[] = [
+                'hari'  => $dateStr,
+                'count' => isset($inquiryData[$dateStr]) ? (int) $inquiryData[$dateStr]->count : 0,
+            ];
+            $current->addDay();
+        }
 
         return $this->success([
-            'total_pertanyaan'      => $totalPertanyaan,
-            'topik_aktif'           => $topikAktif,
-            'inquiry_pending'       => $inquiryPending,
-            'inquiry_resolved'      => $inquiryResolved,
-            'pertanyaan_per_topik'  => $pertanyaanPerTopik,
-            'inquiry_per_minggu'    => $inquiryPerMinggu,
+            'total_pertanyaan'     => $totalPertanyaan,
+            'topik_aktif'          => $topikAktif,
+            'inquiry_pending'      => $inquiryPending,
+            'inquiry_resolved'     => $inquiryResolved,
+            'pertanyaan_per_topik' => $pertanyaanPerTopik,
+            'inquiry_per_hari'     => $inquiryPerHari,
         ]);
     }
 }
