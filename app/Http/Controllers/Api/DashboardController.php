@@ -27,10 +27,9 @@ class DashboardController extends Controller
                 $iQuery->whereYear('created_at', $parts[0])->whereMonth('created_at', $parts[1]);
             }
         } else {
-            // Default: 7 hari terakhir
-            $pQuery->where('created_at', '>=', now()->subDays(7));
-            $tQuery->where('created_at', '>=', now()->subDays(7));
-            $iQuery->where('created_at', '>=', now()->subDays(7));
+            $pQuery->where('created_at', '>=', now()->subDays(30));
+            $tQuery->where('created_at', '>=', now()->subDays(30));
+            $iQuery->where('created_at', '>=', now()->subDays(30));
         }
 
         $totalPertanyaan = $pQuery->count();
@@ -38,7 +37,6 @@ class DashboardController extends Controller
         $inquiryPending  = (clone $iQuery)->where('status', false)->count();
         $inquiryResolved = (clone $iQuery)->where('status', true)->count();
 
-        // Pertanyaan per topik (juga terfilter date)
         $pertanyaanPerTopik = Topik::withCount(['pertanyaan' => function($q) use ($month) {
                 if ($month) {
                     $parts = explode('-', $month);
@@ -46,7 +44,7 @@ class DashboardController extends Controller
                         $q->whereYear('created_at', $parts[0])->whereMonth('created_at', $parts[1]);
                     }
                 } else {
-                    $q->where('created_at', '>=', now()->subDays(7));
+                    $q->where('created_at', '>=', now()->subDays(30));
                 }
             }])
             ->get()
@@ -55,23 +53,34 @@ class DashboardController extends Controller
                 'count' => $t->pertanyaan_count,
             ]);
 
-        $inquiryPerHari = (clone $iQuery)
-            ->selectRaw('DATE(created_at) as hari, COUNT(*) as count')
-            ->groupBy('hari')
-            ->orderBy('hari')
+        $inquiryPerMinggu = (clone $iQuery)
+            ->selectRaw('YEARWEEK(created_at, 1) as minggu_key, COUNT(*) as count')
+            ->groupBy('minggu_key')
+            ->orderBy('minggu_key')
             ->get()
-            ->map(fn ($row) => [
-                'hari'  => $row->hari,
-                'count' => (int) $row->count,
-            ]);
+            ->map(function ($row) {
+                $year = substr($row->minggu_key, 0, 4);
+                $week = substr($row->minggu_key, 4);
+                
+                $dto = new \DateTime();
+                $dto->setISODate($year, $week);
+                $start = $dto->format('d M');
+                $dto->modify('+6 days');
+                $end = $dto->format('d M');
+                
+                return [
+                    'minggu' => "$start - $end",
+                    'count'  => (int) $row->count,
+                ];
+            });
 
         return $this->success([
-            'total_pertanyaan'     => $totalPertanyaan,
-            'topik_aktif'          => $topikAktif,
-            'inquiry_pending'      => $inquiryPending,
-            'inquiry_resolved'     => $inquiryResolved,
-            'pertanyaan_per_topik' => $pertanyaanPerTopik,
-            'inquiry_per_hari'     => $inquiryPerHari,
+            'total_pertanyaan'      => $totalPertanyaan,
+            'topik_aktif'           => $topikAktif,
+            'inquiry_pending'       => $inquiryPending,
+            'inquiry_resolved'      => $inquiryResolved,
+            'pertanyaan_per_topik'  => $pertanyaanPerTopik,
+            'inquiry_per_minggu'    => $inquiryPerMinggu,
         ]);
     }
 }
