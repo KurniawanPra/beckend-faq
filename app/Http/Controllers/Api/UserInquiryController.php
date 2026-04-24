@@ -13,8 +13,23 @@ class UserInquiryController extends Controller
     {
         $query = PertanyaanFromUser::query();
 
+        $status = $request->query('status');
+        $isPendingFilter = $request->has('status') && filter_var($status, FILTER_VALIDATE_BOOLEAN) === false;
+
+        if (!$isPendingFilter) {
+            if ($request->filled('month')) {
+                $parts = explode('-', $request->query('month'));
+                if (count($parts) === 2) {
+                    $query->whereYear('created_at', $parts[0])
+                          ->whereMonth('created_at', $parts[1]);
+                }
+            } else {
+                $query->where('created_at', '>=', now()->subDays(7));
+            }
+        }
+
         if ($request->has('status')) {
-            $query->where('status', filter_var($request->query('status'), FILTER_VALIDATE_BOOLEAN));
+            $query->where('status', filter_var($status, FILTER_VALIDATE_BOOLEAN));
         }
 
         if ($request->filled('jawaban_melalui')) {

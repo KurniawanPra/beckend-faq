@@ -7,26 +7,56 @@ use App\Models\Pertanyaan;
 use App\Models\PertanyaanFromUser;
 use App\Models\Topik;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
-    public function stats(): JsonResponse
+    public function stats(Request $request): JsonResponse
     {
-        $totalPertanyaan = Pertanyaan::count();
-        $belumDijawab    = Pertanyaan::whereNull('jawaban_admin')->orWhere('jawaban_admin', '')->count();
-        $topikAktif      = Topik::count();
-        $inquiryPending  = PertanyaanFromUser::where('status', false)->count();
-        $inquiryResolved = PertanyaanFromUser::where('status', true)->count();
+        $month = $request->query('month');
+        
+        $pQuery = Pertanyaan::query();
+        $tQuery = Topik::query();
+        $iQuery = PertanyaanFromUser::query();
 
-        $pertanyaanPerTopik = Topik::withCount('pertanyaan')
+        if ($month) {
+            $parts = explode('-', $month);
+            if (count($parts) === 2) {
+                $pQuery->whereYear('created_at', $parts[0])->whereMonth('created_at', $parts[1]);
+                $tQuery->whereYear('created_at', $parts[0])->whereMonth('created_at', $parts[1]);
+                $iQuery->whereYear('created_at', $parts[0])->whereMonth('created_at', $parts[1]);
+            }
+        } else {
+            // Default: 7 hari terakhir
+            $pQuery->where('created_at', '>=', now()->subDays(7));
+            $tQuery->where('created_at', '>=', now()->subDays(7));
+            $iQuery->where('created_at', '>=', now()->subDays(7));
+        }
+
+        $totalPertanyaan = $pQuery->count();
+        $topikAktif      = $tQuery->count();
+        $inquiryPending  = (clone $iQuery)->where('status', false)->count();
+        $inquiryResolved = (clone $iQuery)->where('status', true)->count();
+
+        // Pertanyaan per topik (juga terfilter date)
+        $pertanyaanPerTopik = Topik::withCount(['pertanyaan' => function($q) use ($month) {
+                if ($month) {
+                    $parts = explode('-', $month);
+                    if (count($parts) === 2) {
+                        $q->whereYear('created_at', $parts[0])->whereMonth('created_at', $parts[1]);
+                    }
+                } else {
+                    $q->where('created_at', '>=', now()->subDays(7));
+                }
+            }])
             ->get()
             ->map(fn ($t) => [
                 'topik' => $t->nama,
                 'count' => $t->pertanyaan_count,
             ]);
 
-        $inquiryPerHari = PertanyaanFromUser::selectRaw('DATE(created_at) as hari, COUNT(*) as count')
-            ->where('created_at', '>=', now()->subDays(7))
+        $inquiryPerHari = (clone $iQuery)
+            ->selectRaw('DATE(created_at) as hari, COUNT(*) as count')
             ->groupBy('hari')
             ->orderBy('hari')
             ->get()
@@ -36,13 +66,12 @@ class DashboardController extends Controller
             ]);
 
         return $this->success([
-            'total_pertanyaan'         => $totalPertanyaan,
-            'pertanyaan_belum_dijawab' => $belumDijawab,
-            'topik_aktif'              => $topikAktif,
-            'inquiry_pending'          => $inquiryPending,
-            'inquiry_resolved'         => $inquiryResolved,
-            'pertanyaan_per_topik'     => $pertanyaanPerTopik,
-            'inquiry_per_hari'         => $inquiryPerHari,
+            'total_pertanyaan'     => $totalPertanyaan,
+            'topik_aktif'          => $topikAktif,
+            'inquiry_pending'      => $inquiryPending,
+            'inquiry_resolved'     => $inquiryResolved,
+            'pertanyaan_per_topik' => $pertanyaanPerTopik,
+            'inquiry_per_hari'     => $inquiryPerHari,
         ]);
     }
 }
