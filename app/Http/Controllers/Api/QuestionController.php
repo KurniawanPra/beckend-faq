@@ -14,7 +14,7 @@ class QuestionController extends Controller
         $query = Pertanyaan::with('topik:id,nama');
 
         if ($request->filled('topik_id')) {
-            $query->where('topik_id', $request->integer('topik_id'));
+            $query->where('topik_id', (int) $request->query('topik_id'));
         }
 
         if ($request->filled('search')) {
@@ -29,7 +29,7 @@ class QuestionController extends Controller
         $direction = $request->query('direction', 'asc') === 'desc' ? 'desc' : 'asc';
         $query->orderBy($sort, $direction);
 
-        $paginator = $query->paginate(min($request->integer('per_page', 15), 100));
+        $paginator = $query->paginate(min((int) $request->query('per_page', 15), 100));
 
         $data = collect($paginator->items())->map(fn(Pertanyaan $p) => [
             'id'            => $p->id,

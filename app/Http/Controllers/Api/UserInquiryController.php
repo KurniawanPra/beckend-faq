@@ -51,7 +51,7 @@ class UserInquiryController extends Controller
         $direction = $request->query('direction', 'desc') === 'asc' ? 'asc' : 'desc';
         $query->orderBy($sort, $direction);
 
-        $paginator = $query->paginate(min($request->integer('per_page', 15), 100));
+        $paginator = $query->paginate(min((int) $request->query('per_page', 15), 100));
 
         return $this->success($paginator->items(), '', 200, [
             'current_page' => $paginator->currentPage(),
