@@ -1,6 +1,6 @@
 # FAQ PT INL — Backend (Laravel)
 
-Backend API untuk aplikasi **FAQ Portal PT INL**. Dibangun dengan **Laravel 9** + **Sanctum** untuk autentikasi berbasis token.
+Backend API untuk aplikasi **FAQ Portal PT INL**. Dibangun dengan **Laravel 8** + **Sanctum** untuk autentikasi berbasis token.
 
 ---
 
